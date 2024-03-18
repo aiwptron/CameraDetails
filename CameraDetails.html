@@ -1,57 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Camera Detection</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Detection</title>
 </head>
+
 <body>
-<h1>Camera Detection</h1>
-<button onclick="startCamera()">Start Camera</button>
-<p id="cameraPermissionStatus"></p>
-<p id="cameraDetails"></p>
+    <h1>Camera Detection</h1>
+    <button onclick="startCamera()">Start Camera</button>
+    <p id="cameraPermissionStatus"></p>
+    <p id="cameraDetails"></p>
 
-<script>
-async function startCamera() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    document.getElementById('cameraPermissionStatus').textContent = 'Camera permission granted!';
-    displayCameraDetails(stream);
-  } catch (error) {
-    console.error('Error accessing camera:', error);
-    document.getElementById('cameraPermissionStatus').textContent = 'Error accessing camera. Please grant permission.';
-  }
-}
+    <script>
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                document.getElementById('cameraPermissionStatus').textContent = 'Camera permission granted!';
+                displayCameraDetails(stream);
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                document.getElementById('cameraPermissionStatus').textContent = 'Error accessing camera. Please grant permission.';
+            }
+        }
 
-function displayCameraDetails(stream) {
-  const videoTracks = stream.getVideoTracks();
-  if (videoTracks.length > 0) {
-    const cameraDetails = document.getElementById('cameraDetails');
-    cameraDetails.innerHTML = '';
+        function displayCameraDetails(stream) {
+            const videoTracks = stream.getVideoTracks();
+            if (videoTracks.length > 0) {
+                const track = videoTracks[0];
+                const capabilities = track.getCapabilities();
+                const isRealCamera = detectRealCamera(capabilities);
+                const label = track.label || 'Unknown Camera';
 
-    videoTracks.forEach(track => {
-      const capabilities = track.getCapabilities();
-      const isVirtualCamera = detectVirtualCamera(capabilities);
-      const label = track.label || 'Unknown Camera';
+                const detailsHTML = `
+      <strong>Camera Name:</strong> ${label}<br>
+      <strong>Camera Type:</strong> ${isRealCamera ? 'Real Camera' : 'Virtual Camera'}<br>
+      <strong>Capabilities:</strong><br>
+      <pre>${getCapabilitiesList(capabilities)}</pre>
+      <hr>
+    `;
+                document.getElementById('cameraDetails').innerHTML = detailsHTML;
+            } else {
+                document.getElementById('cameraDetails').textContent = 'No camera found.';
+            }
+        }
 
-      const detailsHTML = `
-        <strong>Camera Name:</strong> ${label}<br>
-        <strong>Virtual Camera:</strong> ${isVirtualCamera ? 'Yes' : 'No'}<br>
-        <strong>Capabilities:</strong><br>
-        <pre>${JSON.stringify(capabilities, null, 2)}</pre>
-        <hr>
-      `;
-      cameraDetails.innerHTML += detailsHTML;
-    });
-  } else {
-    document.getElementById('cameraDetails').textContent = 'No camera found.';
-  }
-}
+        function detectRealCamera(capabilities) {
+            // Check for the presence of specific capabilities
+            return (
+                'brightness' in capabilities &&
+                'colorTemperature' in capabilities &&
+                'contrast' in capabilities &&
+                'frameRate' in capabilities
+            );
+        }
 
-function detectVirtualCamera(capabilities) {
-  // Example: Check if the camera supports zoom, which is typically not available in virtual cameras
-  return capabilities.zoom && capabilities.zoom.max === 1;
-}
-</script>
+        function getCapabilitiesList(capabilities) {
+            let list = '';
+            for (const capability in capabilities) {
+                list += `<strong>${capability}:</strong> ${capabilities[capability]}<br>`;
+            }
+            return list;
+        }
+    </script>
 </body>
+
 </html>
