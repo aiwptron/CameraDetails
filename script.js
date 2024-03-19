@@ -33,7 +33,6 @@ function displayCameraDetails(stream) {
 function detectRealCamera(capabilities) {
   // Check for the presence of specific capabilities
   return (
-    'exposureTime' in capabilities &&
     'whiteBalanceMode' in capabilities &&
     'facingMode' in capabilities &&
     'frameRate' in capabilities
