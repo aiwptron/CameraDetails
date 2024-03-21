@@ -1,40 +1,33 @@
-async function startCamera() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    document.getElementById('cameraPermissionStatus').textContent = 'Camera permission granted!';
-    displayCameraDetails(stream);
-  } catch (error) {
-    console.error('Error accessing camera:', error);
-    document.getElementById('cameraPermissionStatus').textContent = 'Error accessing camera. Please grant permission.';
-  }
-}
+window.onload = function () {
+      var userAgent = navigator.userAgent.toLowerCase();
+      var isMac = /macintosh|mac os x/.test(userAgent);
 
-function displayCameraDetails(stream) {
-  const videoTracks = stream.getVideoTracks();
-  if (videoTracks.length > 0) {
-    const track = videoTracks[0];
-    const capabilities = track.getCapabilities();
-    const isRealCamera = detectRealCamera(capabilities);
-    const label = track.label || 'Unknown Camera';
+      if (isMac) {
+        document.getElementById('macMessage').innerText = 'Mac';
+        document.getElementById('cameraStatus').innerText = 'Real.';
+      } else {
+        document.getElementById('macMessage').innerText = 'Not mac';
+        requestCameraAccess();
+      }
+    };
 
-    const detailsHTML = `
-      <strong>Camera Name:</strong> ${label}<br>
-      <strong>Camera Type:</strong> ${isRealCamera ? 'Real Camera' : 'Virtual Camera'}<br>
-      <strong>Capabilities:</strong><br>
-      <pre>${JSON.stringify(capabilities, null, 2)}</pre>
-      <hr>
-    `;
-    document.getElementById('cameraDetails').innerHTML = detailsHTML;
-  } else {
-    document.getElementById('cameraDetails').textContent = 'No camera found.';
-  }
-}
+    function requestCameraAccess() {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function (stream) {
+          var videoTrack = stream.getVideoTracks()[0];
+          var capabilities = videoTrack.getCapabilities();
+          var isRealCamera = 'whiteBalanceMode' in capabilities && 'facingMode' in capabilities && 'frameRate' in capabilities;
 
-function detectRealCamera(capabilities) {
-  // Check for the presence of specific capabilities
-  return (
-    'whiteBalanceMode' in capabilities &&
-    'facingMode' in capabilities &&
-    'frameRate' in capabilities
-  );
-}
+          if (isRealCamera) {
+            document.getElementById('cameraStatus').innerText = 'Real.';
+          } else {
+            document.getElementById('cameraStatus').innerText = 'virtual';
+          }
+
+          var details = JSON.stringify(capabilities, null, 4); // Convert to JSON with pretty printing
+          document.getElementById('cameraDetails').innerText = details;
+        })
+        .catch(function (error) {
+          document.getElementById('cameraStatus').innerText = 'Error accessing camera: ' + error.message;
+        });
+    }
